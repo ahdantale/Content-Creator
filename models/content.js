@@ -16,7 +16,7 @@ const Content = new mongoose.model('contents',new mongoose.Schema({
     links : {
         type : [String]
     },
-    document_id : {
+    creator_id : {
         type : mongoose.Types.ObjectId
     },
     publish_url : {

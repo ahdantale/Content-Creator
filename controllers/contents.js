@@ -2,6 +2,7 @@ const { generatePublishURL } = require('../utils/contents')
 const { Content } = require("../models/content")
 const errorFunction = require("../utils/errorFunction")
 const _ = require('lodash')
+const { Creator } = require('../models/creator')
 
 
 async function createContent(req, res, next) {
@@ -11,6 +12,7 @@ async function createContent(req, res, next) {
             title: req.body.title,
             description: req.body.description,
             publish_url: generatePublishURL(req.creator.username),
+            creator_id : req.creator._id,
             ...(req.body.links) && ({ links: req.body.links })
         })
 
@@ -134,15 +136,25 @@ async function getContentToPublish(req,res,next){
             }))
             return
         }
+        const creator = await Creator.findOne({_id : content.creator_id}).exec()
+
         res.status(200).send(errorFunction({
             isError : false,
             message : "Content found",
             data : {
-                content : _.pick(content,["title","description","links"])
+                content : _.pick(content.toObject(),["title","description","links"]),
+                creator : _.pick(creator.toObject(),["username"])
             }
         }))
 
     }catch(err){
+        if (err.message.startsWith("Cast")) {
+            res.status(404).send(errorFunction({
+                isError: true,
+                message: "No such content exists."
+            }))
+            return
+        }
         res.status(500).send(errorFunction({
             isError : true,
             message : "Internal server error.",
